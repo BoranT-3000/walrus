@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark"> <!-- Varsayılan tema artık karanlık -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <title>Walrus</title>
+    <style>
+        :root {
+            /* Orijinal vurgu renkleri - sabit kalır */
+            --dark-blue: #003366;
+            --brown: #8B4513;
+            --light-brown: #D2691E; /* Bu renk sadece header'da kullanılır, Rezervasyon için yeni renkler var */
+
+            /* Yeni kenarlık renkleri */
+            --border-lava: #CF1020;
+            --border-topaz: #13BBAF;
+
+            /* Aydınlık temaya özgü altın rengi */
+            --gold-light: #C9B455; /* Daha yumuşak, daha mat altın tonu */
+
+            /* Karanlık tema altını (orijinal parlak altın) */
+            --gold-dark: #FFD700;
+
+            /* Mevcut altın rengi - temaya göre değişir */
+            --current-gold: var(--gold-light); /* Default for light theme, overwritten in dark */
+
+            /* Aydınlık tema renkleri (varsayılan) */
+            --bg-body: #E3DAC9; /* Bone - talep edildiği gibi */
+            --text-main: #333; /* Aydınlık mod için koyu metin */
+            --section-bg-primary: #F8F8F0; /* 'About' ve 'Contact' için daha yumuşak, sıcak bir ton */
+            --section-bg-secondary: #FDFBF2; /* 'Menu' ve 'Footer' için hafif bir gri/beyaz tonu */
+            --card-bg-gradient-start: #EBEBD6; /* Kartlar için kemik rengine yakın bir başlangıç */
+            --card-bg-gradient-end: #E3DAC9; /* Kartlar için kemik renginin kendisi */
+            --card-box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+
+            /* Rezervasyon bölümü için yeni, daha yumuşak renkler */
+            --reservation-bg-start: #A0522D; /* Sienna - daha mat kahverengi-turuncu */
+            --reservation-bg-end: #E9967A; /* Dark Salmon - daha yumuşak turuncu */
+        }
+
+        /* Karanlık tema renkleri */
+        html[data-theme="dark"] {
+            --bg-body: #1a1a1a;
+            --text-main: white;
+            --section-bg-primary: #2a2a2a;
+            --section-bg-secondary: #1a1a1a;
+            --card-bg-gradient-start: #2a2a2a;
+            --card-bg-gradient-end: var(--dark-blue);
+            --card-box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            --current-gold: var(--gold-dark); /* Karanlık temada parlak altın kullan */
+
+            /* Karanlık mod rezervasyon arka planı eski halini korur */
+            --reservation-bg-start: var(--brown);
+            --reservation-bg-end: var(--light-brown);
+        }
+
+        /* Tüm başlıklar için tema uyumlu renk */
+        h2.section-title,
+        .menu-category h3,
+        .contact-item h4 {
+            color: var(--text-main); /* Hem aydınlık hem karanlık modda metin rengini kullanır */
+            transition: color 0.3s;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: var(--text-main);
+            background-color: var(--bg-body);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--brown), var(--light-brown), var(--dark-blue));
+            color: white;
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            transition: background 0.3s, backdrop-filter 0.3s;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex; /* Logo ve metin yan yana gelsin diye */
+            align-items: center; /* Dikeyde ortala */
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--current-gold); /* Mevcut altın rengini kullanır */
+            transition: color 0.3s;
+        }
+        .logo img {
+            height: 40px; /* Logonuza göre ayarlayın */
+            width: auto;
+            margin-right: 10px;
+            border-radius: 5px; /* İsteğe bağlı olarak yuvarlak veya köşeli */
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--current-gold); /* Mevcut altın rengini kullanır */
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .lang-switch,
+        .theme-switch {
+            background: var(--current-gold); /* Mevcut altın rengini kullanır */
+            color: var(--brown);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.3s, background 0.3s; /* Arka plan geçişi eklendi */
+        }
+
+        .lang-switch:hover,
+        .theme-switch:hover {
+            transform: scale(1.05);
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%23D2691E" width="1200" height="600"/><circle fill="%23FFD700" cx="300" cy="150" r="50" opacity="0.3"/><circle fill="%23FFD700" cx="900" cy="400" r="70" opacity="0.2"/></svg>');
+            background-size: cover;
+            background-position: center;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white; /* Hero içeriği her zaman beyaz */
+        }
+
+        .hero-content h1 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            color: var(--current-gold); /* Mevcut altın rengini kullanır */
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            transition: color 0.3s;
+        }
+
+        .hero-content p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            max-width: 600px;
+        }
+
+        .cta-button {
+            background: linear-gradient(45deg, var(--current-gold), var(--dark-blue)); /* Mevcut altın rengini kullanır */
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s, background 0.3s; /* Arka plan geçişi eklendi */
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 215, 0, 0.4);
+        }
+
+        /* Bölümler */
+        section {
+            padding: 5rem 0;
+            transition: background-color 0.3s;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            transition: color 0.3s;
+        }
+
+        /* Hakkımızda Bölümü */
+        .about {
+            background-color: var(--section-bg-primary);
+            color: var(--text-main);
+        }
+
+        .about-content {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+
+        /* Menü Bölümü */
+        .menu {
+            background-color: var(--section-bg-secondary);
+            color: var(--text-main);
+        }
+
+        .menu-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .menu-category {
+            background: linear-gradient(135deg, var(--card-bg-gradient-start), var(--card-bg-gradient-end));
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: var(--card-box-shadow);
+            border: 3px solid; /* Şeker gibi kenarlıklar için */
+            transition: background 0.3s, box-shadow 0.3s, border-color 0.3s;
+        }
+        /* Menü kategorileri için dönüşümlü kenarlıklar */
+        .menu-category:nth-child(odd) {
+            border-color: var(--border-lava); /* Lav */
+        }
+        .menu-category:nth-child(even) {
+            border-color: var(--border-topaz); /* Topaz */
+        }
+
+
+        .menu-category h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            border-bottom: 2px solid var(--current-gold); /* Mevcut altın rengini kullanır */
+            padding-bottom: 0.5rem;
+            transition: color 0.3s, border-color 0.3s;
+        }
+
+        .menu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(128, 128, 128, 0.3); /* Daha yumuşak ayırıcı */
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .item-info {
+            flex: 1;
+        }
+
+        .item-name {
+            font-weight: bold;
+            color: var(--current-gold); /* Mevcut altın rengini kullanır */
+            margin-bottom: 0.5rem;
+            transition: color 0.3s;
+        }
+
+        .item-description {
+            font-size: 0.9rem;
+            color: var(--text-main); /* Temaya uyum sağlar */
+            line-height: 1.4;
+        }
+
+        .item-price {
+            color: var(--current-gold); /* Mevcut altın rengini kullanır */
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-left: 1rem;
+            transition: color 0.3s;
+        }
+
+        /* Rezervasyon Bölümü */
+        .reservation {
+            background: linear-gradient(135deg, var(--reservation-bg-start), var(--reservation-bg-end));
+            color: white;
+            text-align: center;
+            transition: background 0.3s; /* Arka plan geçişi */
+        }
+
+        .reservation-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .whatsapp-btn, .phone-btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .whatsapp-btn {
+            background: #25D366; /* WhatsApp yeşili - sabit */
+            color: white;
+        }
+
+        .phone-btn {
+            background: var(--current-gold); /* Mevcut altın rengini kullanır */
+            color: var(--brown);
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .whatsapp-btn:hover, .phone-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        /* İletişim Bölümü */
+        .contact {
+            background-color: var(--section-bg-primary);
+            color: var(--text-main);
+        }
+
+        .contact-info {
+            display: grid;
+            /* Mobil için tek sütun, daha büyük ekranlar için iki sütun (veya birleşik ve tek saatler) */
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Auto-fit ile esneklik */
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        /* Masaüstünde iki sütunlu düzende birleşik ve ayrı kutu için özel ayar */
+        @media (min-width: 769px) {
+            .contact-info {
+                grid-template-columns: 2fr 1fr; /* Sol geniş kutu, sağ dar kutu */
+            }
+            .contact-item.contact-details-group {
+                grid-column: span 1; /* Varsayılan olarak 1 sütun kapla */
+            }
+            .contact-item.working-hours-group {
+                grid-column: span 1; /* Varsayılan olarak 1 sütun kapla */
+            }
+        }
+        /* İletişim detayları grubunun içindeki elemanlar için stil */
+        .contact-details-group p {
+            margin-bottom: 0.5rem; /* Paragraflar arasında boşluk */
+        }
+        .contact-details-group h4 {
+            margin-bottom: 1.5rem; /* Başlık ile içerik arasında boşluk */
+        }
+        .contact-details-group p.contact-item-label { /* Başlıkları daha belirgin yapmak için */
+            font-weight: bold;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .contact-details-group p span {
+            font-weight: normal; /* İçerik metni için normal font ağırlığı */
+        }
+
+
+        .contact-item {
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, var(--card-bg-gradient-start), var(--card-bg-gradient-end));
+            border-radius: 15px;
+            border: 3px solid; /* Şeker gibi kenarlıklar için */
+            box-shadow: var(--card-box-shadow);
+            transition: background 0.3s, box-shadow 0.3s, border-color 0.3s;
+        }
+        /* İletişim öğeleri için dönüşümlü kenarlıklar */
+        .contact-item:nth-child(odd) {
+            border-color: var(--border-topaz); /* Topaz */
+        }
+        .contact-item:nth-child(even) {
+            border-color: var(--border-lava); /* Lav */
+        }
+
+        .contact-item h4 {
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            transition: color 0.3s;
+        }
+
+        .map-container iframe {
+            width: 100%;
+            height: 200px;
+            border: 0;
+            border-radius: 10px;
+            margin-top: 1rem;
+            margin-bottom: 1rem; /* Harita altı boşluk */
+        }
+
+        /* Altbilgi */
+        footer {
+            background-color: var(--section-bg-secondary); /* Temaya uyum sağlar */
+            color: var(--text-main); /* Temaya uyum sağlar */
+            text-align: center;
+            padding: 2rem 0;
+            border-top: 2px solid var(--brown);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Mobil Duyarlı */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 60px;
+                left: 0;
+                width: 100vw;
+                background: linear-gradient(135deg, var(--dark-blue), var(--brown));
+                flex-direction: column;
+                gap: 1.5rem;
+                padding: 2rem 0;
+                z-index: 999;
+                text-align: center;
+            }
+
+            .nav-links.show {
+                display: flex;
+            }
+
+            .hero-content h1 {
+                font-size: 2.5rem;
+            }
+
+            .menu-categories {
+                grid-template-columns: 1fr;
+            }
+
+            .reservation-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .contact-info {
+                grid-template-columns: 1fr; /* Mobil için tek sütun */
+            }
+            .header-actions {
+                order: 1; /* Mobil görünümde aksiyon butonlarını logonun arkasına yerleştirir (yer darsa) */
+                width: auto; /* Kapsayıcıya sığması için */
+                flex-grow: 1; /* Diğer öğelerin yanında boş alanı doldurur */
+                justify-content: flex-end; /* Sağ tarafa hizala */
+            }
+        }
+
+        /* Mobil Menü */
+        .mobile-menu-btn {
+            display: none; /* Masaüstünde varsayılan olarak gizli */
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: block; /* Mobilde göster */
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <div class="logo">
+                <img src="logo.png" alt="Walrus Logo" style="height: 40px; margin-right: 10px; border-radius: 5px;"> <!-- Logoyu buraya ekleyebilirsiniz, src yolunu değiştirin -->
+                WALRUS
+            </div>
+            <ul class="nav-links">
+                <li><a href="#home" data-tr="Ana Sayfa" data-en="Home">Ana Sayfa</a></li>
+                <li><a href="#about" data-tr="Hakkımızda" data-en="About">Hakkımızda</a></li>
+                <li><a href="#menu" data-tr="Menü" data-en="Menu">Menü</a></li>
+                <li><a href="#reservation" data-tr="Rezervasyon" data-en="Reservation">Rezervasyon</a></li>
+                <li><a href="#contact" data-tr="İletişim" data-en="Contact">İletişim</a></li>
+            </ul>
+            <div class="header-actions">
+                <button class="mobile-menu-btn">☰</button>
+                <button class="lang-switch" onclick="toggleLanguage()">EN</button>
+                <button class="theme-switch" onclick="toggleTheme()">☀️</button>
+            </div>
+        </nav>
+    </header>
+
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1>WALRUS BURGER</h1>
+            <p data-tr="En lezzetli burgerler burada! Taze malzemeler, özel soslar ve unutulmaz tatlar." data-en="The most delicious burgers are here! Fresh ingredients, special sauces and unforgettable flavors.">En lezzetli burgerler burada! Taze malzemeler, özel soslar ve unutulmaz tatlar.</p>
+            <a href="#menu" class="cta-button" data-tr="Menüyü İncele" data-en="View Menu">Menüyü İncele</a>
+        </div>
+    </section>
+
+    <section id="about" class="about">
+        <div class="container">
+            <h2 class="section-title" data-tr="Hakkımızda" data-en="About Us">Hakkımızda</h2>
+            <div class="about-content">
+                <p data-tr="Artık sıradan burgerleri unutun. Walrus Smash Burger, özel tarifli sosları, smash köftesi ve taptaze ekmekleriyle karşınızda! <br> WALRUS Burger, burger severlerin buluşma noktası. 2025 yılından beri kaliteli hizmet ve lezzetli burgerlerimizle müşterilerimizin kalbini fethediyoruz. Taze dana eti, özel soslarımız ve el yapımı patateslerimizle her lokmada mükemmel tat deneyimi sunuyoruz." data-en="Forget ordinary burgers. Walrus Smash Burger is here with its special recipe sauces, smash patty, and fresh bread! <br> WALRUS Burger is the meeting point for burger lovers. Since 2020, we have been conquering our customers' hearts with quality service and delicious burgers. We offer the perfect taste experience in every bite with fresh beef, our special sauces and handmade potatoes.">Artık sıradan burgerleri unutun. Walrus Smash Burger, özel tarifli sosları, smash köftesi ve taptaze ekmekleriyle karşınızda!<br> WALRUS Burger, burger severlerin buluşma noktası. 2020 yılından beri kaliteli hizmet ve lezzetli burgerlerimizle müşterilerimizin kalbini fethediyoruz. Taze dana eti, özel soslarımız ve el yapımı patateslerimizle her lokmada mükemmel tat deneyimi sunuyoruz.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="menu" class="menu">
+        <div class="container">
+            <h2 class="section-title" data-tr="Menümüz" data-en="Our Menu">Menümüz</h2>
+            <div style="text-align:center; margin-bottom:2rem;">
+                <!-- PDF menü bağlantısı yer tutucudur ve bu önizleme ortamında çalışmayacaktır -->
+                <a href="walrus menü.pdf" onclick="alert('Menü pdf sayfasına yönlendirileceksiniz. You will be directed to the menu pdf');" class="cta-button" style="background:linear-gradient(45deg,var(--dark-blue),var(--current-gold));color:white;" data-tr="Tüm Menüyü Gör (PDF)" data-en="View Full Menu (PDF)">Tüm Menüyü Gör (PDF)</a>
+            </div>
+            <div class="menu-categories">
+                <div class="menu-category">
+                    <h3 data-tr="ET BURGERLERI" data-en="BEEF BURGERS">ET BURGERLERI</h3>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name">Cheeseburger</div>
+                            <div class="item-description" data-tr="110gr dana köfte, cheddar peyniri, gewürz gürken turşu, gümüş soğan, ketçap, hardal" data-en="110gr beef patty, cheddar cheese, gewürz pickles, silver onion, ketchup, mustard">110gr dana köfte, cheddar peyniri, gewürz gürken turşu, gümüş soğan, ketçap, hardal</div>
+                        </div>
+                        <div class="item-price">290₺</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name">Walrus Burger</div>
+                            <div class="item-description" data-tr="110gr dana köfte, crispy cheddar, creamy garlic sos, taze soğan, kibrit patates" data-en="110gr beef patty, crispy cheddar, creamy garlic sauce, fresh onion, matchstick potatoes">110gr dana köfte, crispy cheddar, creamy garlic sos, taze soğan, kibrit patates</div>
+                        </div>
+                        <div class="item-price">295₺</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name" data-tr="Trüflü Burger" data-en="Truffle Burger">Trüflü Burger</div>
+                            <div class="item-description" data-tr="110gr dana köfte, cheddar peyniri, çıtır soğan, trüflü mayonez" data-en="110gr beef patty, cheddar cheese, crispy onion, truffle mayonnaise">110gr dana köfte, cheddar peyniri, çıtır soğan, trüflü mayonez</div>
+                        </div>
+                        <div class="item-price">370₺</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name" data-tr="Amerikan Burger" data-en="American Burger">Amerikan Burger</div>
+                            <div class="item-description" data-tr="110gr dana köfte, cheddar peyniri, domates, iceberg marul, gümüş soğan, gewürz gürken turşu, ketçap, hardal, el yapımı mayonez" data-en="110gr beef patty, cheddar cheese, tomato, iceberg lettuce, silver onion, gewürz pickles, ketchup, mustard, handmade mayonnaise">110gr dana köfte, cheddar peyniri, domates, iceberg marul, gümüş soğan, gewürz gürken turşu, ketçap, hardal, el yapımı mayonez</div>
+                        </div>
+                        <div class="item-price">370₺</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name" data-tr="Barbekü Burger" data-en="BBQ Burger">Barbekü Burger</div>
+                            <div class="item-description" data-tr="110gr dana köfte, cheddar peyniri, çıtır soğan, karabiberli rozbif, ev yapımı barbekü sos, limonlu aoli" data-en="110gr beef patty, cheddar cheese, crispy onion, black pepper roast beef, homemade BBQ sauce, lemon aioli">110gr dana köfte, cheddar peyniri, çıtır soğan, karabiberli rozbif, ev yapımı barbekü sos, limonlu aoli</div>
+                        </div>
+                        <div class="item-price">340₺</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name">Cowboy Candy</div>
+                            <div class="item-description" data-tr="110gr dana köfte, cheddar peyniri, kibrit patates, karabiberli rozbif, cowboy candy sos, limonlu aoli" data-en="110gr beef patty, cheddar cheese, matchstick potatoes, black pepper roast beef, cowboy candy sauce, lemon aioli">110gr dana köfte, cheddar peyniri, kibrit patates, karabiberli rozbif, cowboy candy sos, limonlu aoli</div>
+                        </div>
+                        <div class="item-price">350₺</div>
+                    </div>
+                </div>
+
+                <div class="menu-category">
+                    <h3 data-tr="TAVUK BURGERLERI" data-en="CHICKEN BURGERS">TAVUK BURGERLERI</h3>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name">Korean Burger</div>
+                            <div class="item-description" data-tr="150gr çıtır tavuk göğsü, Korean sos, yeşil soğan, iceberg marul, susam, el yapımı mayonez" data-en="150gr crispy chicken breast, Korean sauce, green onion, iceberg lettuce, sesame, handmade mayonnaise">150gr çıtır tavuk göğsü, Korean sos, yeşil soğan, iceberg marul, susam, el yapımı mayonez</div>
+                        </div>
+                        <div class="item-price">340₺</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name">Creamy Garlic Burger</div>
+                            <div class="item-description" data-tr="150gr çıtır tavuk göğsü, cheddar peyniri, kremalı siyah sarımsak sos, gewürz gürken turşu, iceberg marul" data-en="150gr crispy chicken breast, cheddar cheese, creamy black garlic sauce, gewürz pickles, iceberg lettuce">150gr çıtır tavuk göğsü, cheddar peyniri, kremalı siyah sarımsak sos, gewürz gürken turşu, iceberg marul</div>
+                        </div>
+                        <div class="item-price">340₺</div>
+                    </div>
+                </div>
+
+                <div class="menu-category">
+                    <h3 data-tr="PATATES" data-en="POTATOES">PATATES</h3>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name" data-tr="Klasik Patates" data-en="Classic Fries">Klasik Patates</div>
+                        </div>
+                        <div class="item-price">75₺</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name" data-tr="Baharatlı Patates" data-en="Seasoned Fries">Baharatlı Patates</div>
+                        </div>
+                        <div class="item-price">75₺</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name" data-tr="Trüflü Patates" data-en="Truffle Fries">Trüflü Patates</div>
+                        </div>
+                        <div class="item-price">75₺</div>
+                    </div>
+                </div>
+
+                <div class="menu-category">
+                    <h3 data-tr="EKSTRA" data-en="EXTRAS">EKSTRA</h3>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name" data-tr="Köfte" data-en="Patty">Köfte</div>
+                        </div>
+                        <div class="item-price">75₺</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name">Cheddar</div>
+                        </div>
+                        <div class="item-price">40₺</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name">Rozbif</div>
+                        </div>
+                        <div class="item-price">35₺</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name" data-tr="Ekstra Sos" data-en="Extra Sauce">Ekstra Sos</div>
+                            <div class="item-description" data-tr="Trüf, Korean sos, siyah sarımsaklı mayonez" data-en="Truffle, Korean sauce, black garlic mayonnaise">Trüf, Korean sos, siyah sarımsaklı mayonez</div>
+                        </div>
+                        <div class="item-price">30₺</div>
+                    </div>
+                </div>
+
+                <div class="menu-category">
+                    <h3 data-tr="DONDURMA" data-en="ICE CREAM">DONDURMA</h3>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name" data-tr="Vanilyalı Sade" data-en="Vanilla Plain">Vanilyalı Sade</div>
+                        </div>
+                        <div class="item-price">320₺</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name" data-tr="Cookie Karamel Sos" data-en="Cookie Caramel Sauce">Cookie Karamel Sos</div>
+                        </div>
+                        <div class="item-price">100₺</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name" data-tr="Fıstıklı Dubai Sos" data-en="Pistachio Dubai Sauce">Fıstıklı Dubai Sos</div>
+                        </div>
+                        <div class="item-price">120₺</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name" data-tr="Çikolata Sos" data-en="Chocolate Sauce">Çikolata Sos</div>
+                        </div>
+                        <div class="item-price">120₺</div>
+                    </div>
+                </div>
+
+                <div class="menu-category">
+                    <h3 data-tr="İÇECEKLER" data-en="BEVERAGES">İÇECEKLER</h3>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name">Kola</div>
+                        </div>
+                        <div class="item-price">120₺</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name">Ayran</div>
+                        </div>
+                        <div class="item-price">90₺</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name">Sprite</div>
+                        </div>
+                        <div class="item-price">100₺</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name">Fanta</div>
+                        </div>
+                        <div class="item-price">110₺</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name">Ice Tea</div>
+                        </div>
+                        <div class="item-price">140₺</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name">Soda</div>
+                        </div>
+                        <div class="item-price">150₺</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name">Su</div>
+                        </div>
+                        <div class="item-price">130₺</div>
+                    </div>
+                </div>
+
+                <div class="menu-category">
+                    <h3 data-tr="KAHVE" data-en="COFFEE">KAHVE</h3>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name">Espresso</div>
+                        </div>
+                        <div class="item-price">130₺</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name">Americano</div>
+                        </div>
+                        <div class="item-price">30₺</div>
+                    </div>
+                    <div class="menu-item">
+                        <div class="item-info">
+                            <div class="item-name">Latte</div>
+                        </div>
+                        <div class="item-price">65₺</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="reservation" class="reservation">
+        <div class="container">
+            <h2 class="section-title" data-tr="Rezervasyon" data-en="Reservation">Rezervasyon</h2>
+            <p data-tr="Masa rezervasyonu için bizimle iletişime geçin!" data-en="Contact us for table reservation!">Masa rezervasyonu için bizimle iletişime geçin!</p>
+            <div class="reservation-buttons">
+                <a href="https://wa.me/905551234567" class="whatsapp-btn" target="_blank">
+                    📱 <span data-tr="WhatsApp ile Rezervasyon" data-en="Reserve via WhatsApp">WhatsApp ile Rezervasyon</span>
+                </a>
+                <a href="tel:+905551234567" class="phone-btn">
+                    📞 <span data-tr="Telefon ile Ara" data-en="Call Now">Telefon ile Ara</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="contact">
+        <div class="container">
+            <h2 class="section-title" data-tr="İletişim" data-en="Contact">İletişim</h2>
+            <div class="contact-info">
+                <div class="contact-item contact-details-group">
+                    <h4 data-tr="İletişim Bilgileri" data-en="Contact Information">İletişim Bilgileri</h4>
+                    <p class="contact-item-label" data-tr="Adres:" data-en="Address:">Adres:</p>
+                    <p data-tr="Ataköy 7-8-9-10 Martı Sitesi 1G No:18<br>Bakırköy, İstanbul, Türkiye" data-en="Ataköy 7-8-9-10 Martı Sitesi 1G No:18<br>Bakırköy, Istanbul, Turkey">Ataköy 7-8-9-10 Martı Sitesi 1G No:18<br>Bakırköy, İstanbul, Türkiye</p>
+                    <div class="map-container">
+                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2521.7000635930885!2d28.849937899999997!3d40.9831955!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14caa36db9514155%3A0x15051a420212b2d!2sWALRUS!5e1!3m2!1str!2str!4v1751110496083!5m2!1str!2str" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                    </div>
+                    <p class="contact-item-label" data-tr="Telefon:" data-en="Phone:">Telefon:</p>
+                    <p>+90 555 123 45 67</p>
+                    <p class="contact-item-label" data-tr="E-posta:" data-en="Email:">E-posta:</p>
+                    <p>walrusistanbul@gmail.com</p>
+                    <p class="contact-item-label" data-tr="Instagram:" data-en="Instagram:">Instagram:</p>
+                    <p><a href="https://www.instagram.com/walrusistanbul/" target="_blank" style="color: var(--current-gold); text-decoration: none;">@walrusistanbul</a></p>
+                </div>
+                <div class="contact-item working-hours-group">
+                    <h4 data-tr="Çalışma Saatleri" data-en="Working Hours">Çalışma Saatleri</h4>
+                    <p data-tr="Pazartesi - Pazar<br>11:00 - 23:00" data-en="Monday - Sunday<br>11:00 - 23:00">Pazartesi - Pazar<br>11:00 - 23:00</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Walrus Burger. <span data-tr="Tüm hakları saklıdır." data-en="All rights reserved.">Tüm hakları saklıdır.</span></p>
+        </div>
+    </footer>
+
+    <script>
+        let currentLang = 'tr';
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'tr' ? 'en' : 'tr';
+            updateLanguage();
+        }
+
+        function updateLanguage() {
+            const elements = document.querySelectorAll('[data-tr][data-en]');
+            const langButton = document.querySelector('.lang-switch');
+            
+            elements.forEach(element => {
+                if (currentLang === 'tr') {
+                    element.innerHTML = element.getAttribute('data-tr');
+                } else {
+                    element.innerHTML = element.getAttribute('data-en');
+                }
+            });
+            
+            langButton.textContent = currentLang === 'tr' ? 'EN' : 'TR';
+            document.documentElement.lang = currentLang;
+        }
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+                // Menüden bir linke tıklanınca menüyü kapat
+                if(window.innerWidth <= 768) {
+                    const navLinks = document.querySelector('.nav-links');
+                    navLinks.classList.remove('show');
+                }
+            });
+        });
+
+        // Mobile menu toggle
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const navLinks = document.querySelector('.nav-links');
+        
+        mobileMenuBtn.addEventListener('click', () => {
+            navLinks.classList.toggle('show');
+        });
+
+        // Header scroll effect
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 100) {
+                header.style.background = 'linear-gradient(135deg, rgba(139, 69, 19, 0.95), rgba(210, 105, 30, 0.95), rgba(0,51,102,0.95))';
+                header.style.backdropFilter = 'blur(10px)';
+            } else {
+                header.style.background = 'linear-gradient(135deg, var(--brown), var(--light-brown), var(--dark-blue))';
+                header.style.backdropFilter = 'none';
+            }
+        });
+
+        // Theme toggle logic
+        function toggleTheme() {
+            const htmlElement = document.documentElement;
+            let currentTheme = htmlElement.getAttribute('data-theme');
+            let newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            htmlElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme); // Tercihi kaydet
+            updateThemeButton(newTheme);
+        }
+
+        function updateThemeButton(theme) {
+            const themeButton = document.querySelector('.theme-switch');
+            // Buton simgesi, geçiş yapacağınız temayı göstermeli
+            themeButton.textContent = theme === 'light' ? '🌙' : '☀️';
+            themeButton.setAttribute('aria-label', theme === 'light' ? 'Karanlık Moda Geç' : 'Aydınlık Moda Geç');
+        }
+
+        // Initialize language and theme on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Tema başlangıcı: localStorage'dan tema tercihini veya varsayılan olarak 'dark' temasını başlat
+            const savedTheme = localStorage.getItem('theme');
+            const htmlElement = document.documentElement;
+            if (savedTheme) {
+                htmlElement.setAttribute('data-theme', savedTheme);
+            } else {
+                htmlElement.setAttribute('data-theme', 'dark'); // Varsayılan olarak karanlık
+            }
+            updateThemeButton(htmlElement.getAttribute('data-theme')); // Buton simgesini güncelle
+            
+            updateLanguage(); // Dil başlangıcı (placeholder'ı güncellemek için tema ayarından sonra çağır)
+        });
+    </script>
+</body>
+</html>
